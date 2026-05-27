@@ -1,0 +1,135 @@
+{
+  "tickers_by_sector": {
+    "Financials": [
+      "FSR.JO",
+      "CPI.JO",
+      "SBK.JO",
+      "SLM.JO",
+      "ABG.JO",
+      "DSY.JO",
+      "NED.JO",
+      "OUT.JO",
+      "RNI.JO",
+      "NRP.JO",
+      "INP.JO",
+      "REM.JO",
+      "OMU.JO",
+      "QLT.JO",
+      "GRT.JO",
+      "SNT.JO",
+      "RMI.JO",
+      "MTM.JO",
+      "RDF.JO",
+      "INL.JO"
+    ],
+
+    "Healthcare & Pharma": [
+      "APN.JO",
+      "NTC.JO",
+      "LHC.JO",
+      "AIP.JO",
+      "ACT.JO",
+      "ASC.JO",
+      "GLI.JO"
+    ],
+
+    "Industrials": [
+      "BVT.JO",
+      "BAW.JO",
+      "GND.JO",
+      "WBO.JO",
+      "RLO.JO",
+      "PPC.JO",
+      "CAA.JO",
+      "RBX.JO",
+      "AFT.JO",
+      "HDC.JO",
+      "SPG.JO",
+      "NT1.JO",
+      "BEL.JO",
+      "KAP.JO",
+      "NPK.JO",
+      "MPT.JO",
+      "IVT.JO",
+      "NVS.JO",
+      "MDI.JO",
+      "ART.JO"
+    ],
+
+    "Large Cap": [
+      "PRX.JO",
+      "BHG.JO",
+      "BTI.JO",
+      "ANH.JO",
+      "CFR.JO",
+      "GLN.JO",
+      "NPN.JO",
+      "AGL.JO",
+      "GFI.JO",
+      "ANG.JO"
+    ],
+
+    "Media": [
+      "MCG.JO",
+      "CAT.JO",
+      "EMN.JO",
+      "AME.JO",
+      "EMH.JO"
+    ],
+
+    "Retail & Consumer": [
+      "SHP.JO",
+      "BID.JO",
+      "PPH.JO",
+      "CLS.JO",
+      "MRP.JO",
+      "WHL.JO",
+      "BOX.JO",
+      "TFG.JO",
+      "DCP.JO",
+      "TRU.JO",
+      "PIK.JO",
+      "SPP.JO",
+      "ADH.JO",
+      "MTH.JO"
+    ],
+
+    "Technology": [
+      "PRX.JO",
+      "NPN.JO",
+      "KRO.JO",
+      "BYI.JO",
+      "WBC.JO",
+      "DTC.JO",
+      "AEL.JO",
+      "MST.JO",
+      "PBG.JO",
+      "ISA.JO",
+      "SEB.JO",
+      "CTA.JO",
+      "EOH.JO"
+    ],
+
+    "Telecommunications": [
+      "MTN.JO",
+      "VOD.JO",
+      "TKG.JO",
+      "BLU.JO",
+      "HUG.JO",
+      "TLM.JO"
+    ],
+
+    "Major SA Equity Index ETFs": [
+      "STX40.JO",
+      "STXCAP.JO",
+      "WTOP20.JO",
+      "STXICT.JO"
+    ],
+
+    "SA Global Index ETFs": [
+      "STXWDM.JO",
+      "STXEMG.JO",
+      "SYGGE.JO"
+    ]
+  }
+}
