@@ -1,4 +1,4 @@
-from src.data.returns import get_log_returns, get_close_prices
+from src.data.returns import get_log_returns
 
 def pseudo_observations():
     """

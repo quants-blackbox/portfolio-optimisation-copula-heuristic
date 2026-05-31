@@ -1,8 +1,9 @@
 import pandas as pd
+import yfinance as yf
 import json
 from pathlib import Path
 
-def load_data():
+def load_data(start_date="2005-01-01", end_date="2025-12-31"):
     """
     Load data from local file or fetch from Yahoo Finance if not available
     """
@@ -14,14 +15,12 @@ def load_data():
 
         print("Loading local data...")
         raw_data = pd.read_csv(
-                    file_path,
-                    header=[0, 1],  # multi-index columns
-                    index_col=0,  # first column is date
-                    parse_dates=True)
+                    file_path, parse_dates=["Date"], index_col="Date")
     else:
         print("Fetching data from Yahoo Finance...")
-        # fetch logic here
-        raw_data = None
+        tickers = get_all_tickers()
+        raw_data = yf.download(tickers, start=start_date, end=end_date)["Close"]
+        raw_data.to_csv("data/raw/raw_data.csv")
 
     return raw_data
 

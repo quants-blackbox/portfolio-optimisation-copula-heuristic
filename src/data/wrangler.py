@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from ..data.loader import load_data, get_all_tickers
@@ -10,21 +11,16 @@ def data_wrangler():
     """
     raw_data = load_data()
 
-    # Ensure date index (safe, idempotent)
-    raw_data.index = pd.to_datetime(raw_data.index)
-
     # Define critical periods where data availability is crucial
     forbidden_periods = [
         ('2007-01-01', '2009-12-31'),
         ('2020-01-01', '2020-12-31')
     ]
 
-    # Extract close prices correctly
-    # Case 1: columns = (Feature, Ticker)
-    close_prices = raw_data.xs('Close', level=0, axis=1).copy()
+    close_prices = raw_data.copy()
 
-    # If instead columns = (Ticker, Feature), use:
-    # close_prices = raw_data.xs('Close', level=1, axis=1).copy()
+    # Remove .JO suffix from tickers
+    close_prices.columns = [c.split(".")[0] for c in close_prices.columns]
 
     max_count = close_prices.count().max()
 
