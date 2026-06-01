@@ -2,7 +2,7 @@ import logging
 
 from src.data.returns import get_log_returns
 from src.dependence.pseudo_observations import pseudo_observations
-
+import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -10,6 +10,11 @@ import pyvinecopulib as pv
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+def cov_matrix():
+    returns = get_log_returns()
+    return returns.cov()
+    
 
 def person_correlation():
     """
