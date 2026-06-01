@@ -4,12 +4,14 @@ from src.optimisation.hmv.clustering import clustering_matrix, dependence_matrix
 from src.dependence.dependence import PROJECT_ROOT
 
 def quasi_diagonalisation():
+    """
+    
+    """
 
     link = clustering_matrix()
     
     dep_matrix = dependence_matrix(1)
 
-    # 2. quasi-diagonalisation phase
     sortIx = quasi_diagonal(link)
     sortIx_index = sortIx.copy()
     sortIx = dep_matrix.index[sortIx].tolist()
