@@ -175,4 +175,4 @@ def plot_weights(weights, opt_method='HRP', corr_type='Kendall tau'):
 
     print(f"Saved chart to: {filepath}")
 
-    plt.show()
+    # plt.show()

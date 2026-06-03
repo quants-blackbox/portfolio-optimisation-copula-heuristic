@@ -66,4 +66,4 @@ def plot_dendrogram(link=None, labels=None, save=True):
     out_path = PROJECT_ROOT / "data" / "output" / "results" / "dendrogram.png"
     plt.savefig(out_path, dpi=150)
 
-    return fig
+    # return fig
