@@ -6,3 +6,6 @@
 
 .claude
 
+# Generated output artifacts
+data/output/
+

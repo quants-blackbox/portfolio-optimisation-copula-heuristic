@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-def fit_vine_model ():
+def _fit_vine_model ():
     """
     Fit an r-vine copula model to the pseudo-observations of the log returns.
     """
@@ -44,6 +44,6 @@ def load_vine_model():
             model = pickle.load(f)
     else:
         logger.warning("No saved copula model found. Fitting a new model.")
-        model = fit_vine_model()
+        model = _fit_vine_model()
     return model
 

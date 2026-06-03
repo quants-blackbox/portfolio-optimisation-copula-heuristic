@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 from ..data.wrangler import get_close_prices
 
@@ -42,3 +43,11 @@ def get_simple_returns() -> pd.DataFrame:
     prices = get_close_prices()
 
     return calculate_simple_returns(prices)
+
+def split_returns():
+
+    returns = get_log_returns()
+
+    train, test = train_test_split(returns, test_size=0.2, random_state=42)
+
+    return train, test

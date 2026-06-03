@@ -7,10 +7,15 @@ import scipy.spatial.distance as scd
 
 from src.data.wrangler import get_kept_tickers
 from src.dependence.dependence import PROJECT_ROOT
+from src.dependence.copula_modelling import load_vine_model
+from src.dependence.reporting import vine_copula_table
 
 output_dir = PROJECT_ROOT / "data" / "output" / "results" / "vine_copula_table.csv"
 
 def dependence_matrix (tree_index = 1):
+
+    if not output_dir.exists():
+        vine_copula_table(load_vine_model())
 
     df = pd.read_csv(output_dir)
     tree = df[df["Tree"] == int(tree_index)]
@@ -28,8 +33,6 @@ def dependence_matrix (tree_index = 1):
     for a in assets:
         tau_matrix.loc[a, a] = 1.0
 
-    # tau_matrix = tau_matrix.drop('55', axis=1)
-
     return tau_matrix
 
 def clustering_matrix():
@@ -44,16 +47,12 @@ def clustering_matrix():
 
     link = sch.linkage(dist_condensed, 'single')
 
+    plot_dendrogram(link=link)
+
     return link
 
 
 def plot_dendrogram(link=None, labels=None, save=True):
-
-    if link is None:
-        link = clustering_matrix()
-
-    if labels is None:
-        labels = dependence_matrix(1).index.tolist()
 
     fig, ax = plt.subplots(figsize=(12, 6))
     sch.dendrogram(link, labels=labels, leaf_rotation=90, ax=ax)
@@ -62,13 +61,9 @@ def plot_dendrogram(link=None, labels=None, save=True):
     ax.set_ylabel('Distance')
     plt.tight_layout()
 
-    if save:
-        out_path = PROJECT_ROOT / "data" / "output" / "results" / "dendrogram.png"
-        plt.savefig(out_path, dpi=150)
+    print("Save dendrogram")
 
-    plt.show()
+    out_path = PROJECT_ROOT / "data" / "output" / "results" / "dendrogram.png"
+    plt.savefig(out_path, dpi=150)
+
     return fig
-
-
-if __name__ == "__main__":
-    plot_dendrogram()

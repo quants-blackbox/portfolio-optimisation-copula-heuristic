@@ -5,12 +5,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-from src.dependence.dependence import cov_matrix
+from src.dependence.dependence import *
+from src.data.returns import *
 from src.optimisation.hmv.clustering import dependence_matrix
 from src.optimisation.hmv.seriation import quasi_diagonalisation
+from src.dependence.dependence import PROJECT_ROOT
 
 
-def heuristic_optimisation(opt_type='HRP', gamma=0):
+def heuristic_optimisation(gamma=0):
     """
     Orchestrate the heuristic allocation pipeline:
 
@@ -29,18 +31,23 @@ def heuristic_optimisation(opt_type='HRP', gamma=0):
     # 1. + 2. clustering / quasi-diagonalisation phase
     ordered_assets = quasi_diagonalisation()
 
-    # 3. recursive bisection phase
-    if opt_type == 'HRP':
-        # HRP bisects on the dependence (Kendall-tau) matrix.
-        reordered = dependence_matrix(1).loc[ordered_assets, ordered_assets]
-        return recursive_bisection(reordered, ordered_assets)
-    elif opt_type == 'HMV':
-        # HMV needs a genuine covariance matrix (Schur complements are scale-aware).
-        reordered_cov = cov_matrix().loc[ordered_assets, ordered_assets]
-        return pd.Series(recursive_hmv(reordered_cov, gamma, ordered_assets))
+    # # 3. recursive bisection phase
+    # if opt_type == 'HRP':
+    #     # HRP bisects on the dependence (Kendall-tau) matrix.
+    #     reordered = dependence_matrix(1).loc[ordered_assets, ordered_assets]
+    #     return recursive_bisection(reordered, ordered_assets)
+    # elif opt_type == 'HMV':
 
-    raise ValueError(f"Unknown opt_type {opt_type!r}; expected 'HRP' or 'HMV'.")
+    # HMV needs a genuine covariance matrix (Schur complements are scale-aware).
+    train_returns, _ = split_returns()
+    cov_matrix = train_returns.cov()
+    reordered_cov = cov_matrix.loc[ordered_assets, ordered_assets]
 
+    weights = pd.Series(recursive_hmv(reordered_cov, gamma, ordered_assets))
+    
+    plot_weights(weights=weights, opt_method='HMV')
+
+    return weights
 
 def recursive_hmv(sigma, gamma, orderded_assets, eps=1e-8):
     """
@@ -115,9 +122,6 @@ def recursive_hmv(sigma, gamma, orderded_assets, eps=1e-8):
 
     return out      
 
-
-
-
 def _safe_inv(sigma, eps=1e-8):
     """
     Invert M robustly: try np.linalg.inv, else use ridge regularization,
@@ -131,18 +135,44 @@ def _safe_inv(sigma, eps=1e-8):
         except np.linalg.LinAlgError:
             return np.linalg.pinv(sigma)
 
-
 def plot_weights(weights, opt_method='HRP', corr_type='Kendall tau'):
     """
     Render a donut chart of the capital allocation.
 
     weights : pandas Series of weights indexed by asset.
     """
-    fig, ax = plt.subplots(figsize=(6, 6))
-    wedges, texts = ax.pie(weights, startangle=90, wedgeprops={'width': 0.4})
-    percentages = [f'{p:.1%}' for p in weights]  # convert to percentage string
-    legend_labels = [f'{label}: {pct}' for label, pct in zip(weights.index, percentages)]
+    output_dir = PROJECT_ROOT / "data" / "output" / "results"
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    ax.legend(wedges, legend_labels, title="Assets", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-    plt.title(f'Capital Allocation {opt_method} - {corr_type}')
+    fig, ax = plt.subplots(figsize=(6, 6))
+
+    wedges, texts = ax.pie(
+        weights,
+        startangle=90,
+        wedgeprops={"width": 0.4}
+    )
+
+    percentages = [f"{p:.1%}" for p in weights]
+    legend_labels = [
+        f"{label}: {pct}"
+        for label, pct in zip(weights.index, percentages)
+    ]
+
+    ax.legend(
+        wedges,
+        legend_labels,
+        title="Assets",
+        loc="center left",
+        bbox_to_anchor=(1, 0, 0.5, 1)
+    )
+
+    plt.title(f"Capital Allocation {opt_method} - {corr_type}")
+
+    filename = f"capital_allocation_{opt_method}_{corr_type}.png"
+    filepath = output_dir / filename
+
+    plt.savefig(filepath, dpi=300, bbox_inches="tight")
+
+    print(f"Saved chart to: {filepath}")
+
     plt.show()
