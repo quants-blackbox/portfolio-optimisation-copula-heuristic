@@ -46,4 +46,3 @@ def load_vine_model():
         logger.warning("No saved copula model found. Fitting a new model.")
         model = _fit_vine_model()
     return model
-

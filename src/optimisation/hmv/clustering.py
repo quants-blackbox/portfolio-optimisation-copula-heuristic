@@ -47,7 +47,8 @@ def clustering_matrix():
 
     link = sch.linkage(dist_condensed, 'single')
 
-    plot_dendrogram(link=link)
+    # pass the ticker names so the dendrogram leaves are labelled by asset
+    plot_dendrogram(link=link, labels=dep_matrix.columns.tolist())
 
     return link
 
@@ -61,9 +62,10 @@ def plot_dendrogram(link=None, labels=None, save=True):
     ax.set_ylabel('Distance')
     plt.tight_layout()
 
-    print("Save dendrogram")
+    if save:
+        print("Save dendrogram")
 
-    out_path = PROJECT_ROOT / "data" / "output" / "results" / "dendrogram.png"
-    plt.savefig(out_path, dpi=150)
+        out_path = PROJECT_ROOT / "data" / "output" / "results" / "dendrogram.png"
+        plt.savefig(out_path, dpi=150)
 
-    # return fig
+    return fig

@@ -1,6 +1,6 @@
 import logging
 
-from src.data.returns import get_log_returns
+from src.data.returns import split_returns
 from src.dependence.pseudo_observations import pseudo_observations
 import pandas as pd
 import networkx as nx
@@ -12,7 +12,7 @@ import pyvinecopulib as pv
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 def cov_matrix():
-    returns = get_log_returns()
+    returns,_ = split_returns()
     return returns.cov()
     
 
@@ -20,7 +20,7 @@ def person_correlation():
     """
     Calculate Pearson correlation matrix of log returns.
     """
-    returns = get_log_returns()
+    returns,_ = split_returns()
 
     return returns.corr()
 
