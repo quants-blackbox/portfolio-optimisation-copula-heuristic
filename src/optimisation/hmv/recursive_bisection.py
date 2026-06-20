@@ -1,5 +1,6 @@
 from RiskLabAI.optimization import recursive_bisection
 from RiskLabAI.optimization.hrp import *
+
 import riskfolio as rp
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -9,10 +10,11 @@ from src.dependence.dependence import *
 from src.data.returns import *
 from src.optimisation.hmv.clustering import dependence_matrix
 from src.optimisation.hmv.seriation import quasi_diagonalisation
+
 from src.dependence.dependence import PROJECT_ROOT
 
 
-def heuristic_optimisation(train_returns, gamma=0):
+def heuristic_optimisation(train_returns, gamma=0.86):
     """
     Orchestrate the heuristic allocation pipeline:
 
@@ -36,7 +38,7 @@ def heuristic_optimisation(train_returns, gamma=0):
 
     weights = pd.Series(_recursive_hmv(reordered_cov, gamma, ordered_assets))
     
-    # plot_weights(weights=weights, opt_method='HMV')
+    # plot_weights(weights=weights, opt_method='HMV', gamma=gamma)
 
     return weights
 
@@ -220,7 +222,7 @@ def nearest_pd(M, eps=1e-6):
 
     return eigvecs @ np.diag(eigvals) @ eigvecs.T
 
-def plot_weights(weights, opt_method='HRP', corr_type='Kendall tau'):
+def plot_weights(weights, opt_method='HRP', corr_type='Kendall tau', gamma=0.86):
     """
     Render a donut chart of the capital allocation.
 
@@ -244,7 +246,7 @@ def plot_weights(weights, opt_method='HRP', corr_type='Kendall tau'):
 
     plt.title(f"Capital Allocation {opt_method} - {corr_type}")
 
-    filename = f"capital_allocation_{opt_method}_{corr_type}.png"
+    filename = f"capital_allocation_{opt_method}_{corr_type}_{gamma}.png"
     filepath = output_dir / filename
 
     plt.savefig(filepath, dpi=300, bbox_inches="tight")
@@ -391,7 +393,7 @@ def plot_gamma_sensitivity(results, output_dir=None):
 
     plt.title(
         'Figure 3: Gamma Sensitivity — HMV Portfolio Variance and Sharpe Ratio\n'
-        '(Test period 2013–2025, RF = 7.25%)',
+        '(Test period 2019–2025, RF = 7.25%)',
         fontsize=12, pad=10
     )
     plt.tight_layout()
@@ -404,6 +406,187 @@ def plot_gamma_sensitivity(results, output_dir=None):
     filepath = output_dir / "figure3_gamma_sensitivity.png"
     plt.savefig(filepath, dpi=300, bbox_inches='tight')
     print(f"\nSaved figure to: {filepath}")
-    plt.show()
+    # plt.show()
 
     return optimal_gamma, optimal_sharpe
+
+def gamma_sweep(train_returns: pd.DataFrame,
+                test_returns:  pd.DataFrame,
+                gamma_values:  list,
+                rf_annual:     float = 0.0725,
+                periods:       int   = 252) -> pd.DataFrame:
+    """
+    Run heuristic_optimisation for each gamma value and compute:
+      - Portfolio weights
+      - Annualised Sharpe ratio (test data)
+      - Diversification Ratio (train covariance)
+
+    Parameters
+    ----------
+    train_returns : pd.DataFrame — training period returns
+    test_returns  : pd.DataFrame — test period returns
+    gamma_values  : list of gamma values to sweep
+    rf_annual     : annual risk-free rate
+    periods       : trading days per year
+
+    Returns
+    -------
+    pd.DataFrame with one row per gamma, columns:
+        gamma, sharpe, diversification_ratio
+    also stores weights in a dict keyed by gamma
+    """
+
+    # Imported lazily to avoid a circular import: src.performance imports
+    # heuristic_optimisation from this module at package-init time.
+    from src.performance.portfolio_metrics import diversification_ratio
+
+    rf_daily   = rf_annual / periods
+    cov_train  = train_returns.cov()
+    assets     = test_returns.columns.tolist()
+
+    records      = []
+    weights_dict = {}
+
+    for gamma in gamma_values:
+        print(f"Running γ = {gamma} ...", end='  ')
+
+        # ── fit weights on training data ──────────────────────────────
+        weights = heuristic_optimisation(
+            train_returns=train_returns,
+            gamma=gamma
+        )
+        weights = weights.reindex(assets).fillna(0)
+        weights = weights / weights.sum()
+
+        # ── evaluate on test data ─────────────────────────────────────
+        port_returns = test_returns @ weights
+        ann_return   = port_returns.mean() * periods
+        ann_vol      = port_returns.std()  * np.sqrt(periods)
+        sharpe       = (ann_return - rf_annual) / ann_vol
+
+        # ── diversification ratio (uses train covariance) ────────────
+        dr = diversification_ratio(weights, cov_train)
+
+        print(f"Sharpe = {sharpe:.3f}  DR = {dr:.3f}")
+
+        weights_dict[gamma] = weights
+        records.append({
+            'gamma'                 : gamma,
+            'Sharpe Ratio'          : round(sharpe, 3),
+            'Diversification Ratio' : round(dr,     3),
+        })
+
+    results_df = pd.DataFrame(records).set_index('gamma')
+
+    return results_df, weights_dict
+
+def gamma_comparison(opt_results:   pd.DataFrame,
+                     
+
+                     gamma_values:  list,
+                     train_returns: pd.DataFrame,
+                     test_returns:  pd.DataFrame,
+                     rf_annual:     float = 0.0725,
+                     periods:       int   = 252) -> pd.DataFrame:
+    """
+    From the full gamma_sensitivity sweep, extract rows corresponding
+    to gamma_values and compute the Diversification Ratio for each.
+    Appends HRP, MVP, and Equal Weight as benchmark rows.
+
+    Parameters
+    ----------
+    opt_results   : DataFrame returned by gamma_sensitivity()
+                    must have columns: gamma, sharpe, weights
+    gamma_values  : list e.g. [0, 0.25, 0.5, 0.75, 1]
+    train_returns : pd.DataFrame — training period
+    test_returns  : pd.DataFrame — test period
+    rf_annual     : annual risk-free rate (default 7.25%)
+    periods       : trading days per year (default 252)
+
+    Returns
+    -------
+    pd.DataFrame indexed by label with columns:
+        gamma, sharpe, diversification_ratio, weights, type
+    """
+
+    # Imported lazily to avoid a circular import: src.performance imports
+    # heuristic_optimisation from this module at package-init time.
+    from src.performance.portfolio_metrics import diversification_ratio
+    from src.optimisation.hrp.hrp_weights  import hrp_weights
+    from src.optimisation.mvp.mvp_solver   import mvp_weights
+    from src.optimisation.eqw.eq_weights   import equal_weights
+
+    assets    = test_returns.columns.tolist()
+    cov_train = train_returns.cov()
+    rows      = []
+
+    # ── HMV rows at each requested gamma ─────────────────────────────
+    for gamma in gamma_values:
+
+        # find closest gamma row in sweep results
+        idx = (opt_results['gamma'] - gamma).abs().idxmin()
+        row = opt_results.loc[idx]
+
+        w = row['weights'].reindex(assets).fillna(0)
+        w = w / w.sum()
+
+        rows.append({
+            'label'                 : f'HMV γ={gamma}',
+            'gamma'                 : gamma,
+            'sharpe'                : round(float(row['sharpe']), 3),
+            'diversification_ratio' : diversification_ratio(w, cov_train),
+            'weights'               : w,
+            'type'                  : 'HMV'
+        })
+
+    # ── helper: compute sharpe from weights ───────────────────────────
+    def _sharpe(w):
+        ret    = test_returns @ w
+        ann_r  = ret.mean() * periods
+        ann_v  = ret.std()  * np.sqrt(periods)
+        return round(float((ann_r - rf_annual) / ann_v), 3)
+
+    # ── HRP benchmark ─────────────────────────────────────────────────
+    w_hrp = hrp_weights(train_returns)
+    w_hrp = w_hrp.reindex(assets).fillna(0)
+    w_hrp = w_hrp / w_hrp.sum()
+
+    rows.append({
+        'label'                 : 'HRP',
+        'gamma'                 : None,
+        'sharpe'                : _sharpe(w_hrp),
+        'diversification_ratio' : diversification_ratio(w_hrp, cov_train),
+        'weights'               : w_hrp,
+        'type'                  : 'benchmark'
+    })
+
+    # ── MVP benchmark ─────────────────────────────────────────────────
+    w_mvp = pd.Series(mvp_weights(cov_train), index=assets)
+    w_mvp = w_mvp.reindex(assets).fillna(0)
+    w_mvp = w_mvp / w_mvp.sum()
+
+    rows.append({
+        'label'                 : 'MVP',
+        'gamma'                 : None,
+        'sharpe'                : _sharpe(w_mvp),
+        'diversification_ratio' : diversification_ratio(w_mvp, cov_train),
+        'weights'               : w_mvp,
+        'type'                  : 'benchmark'
+    })
+
+    # ── Equal Weight benchmark ────────────────────────────────────────
+    w_eqw = equal_weights(returns=train_returns)
+    w_eqw = w_eqw.reindex(assets).fillna(0)
+    w_eqw = w_eqw / w_eqw.sum()
+
+    rows.append({
+        'label'                 : 'Equal Weight',
+        'gamma'                 : None,
+        'sharpe'                : _sharpe(w_eqw),
+        'diversification_ratio' : diversification_ratio(w_eqw, cov_train),
+        'weights'               : w_eqw,
+        'type'                  : 'benchmark'
+    })
+
+    return pd.DataFrame(rows).set_index('label')
+

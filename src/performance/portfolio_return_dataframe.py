@@ -26,7 +26,7 @@ def portfolio_return_dataframe(train_returns: pd.DataFrame,
     """
 
     # weights estimated on training set
-    hmv_weights = heuristic_optimisation(train_returns, gamma=0.86)
+    hmv_weights = heuristic_optimisation(train_returns, gamma=0.88)
 
     hrp_w = hrp_weights(train_returns)
 

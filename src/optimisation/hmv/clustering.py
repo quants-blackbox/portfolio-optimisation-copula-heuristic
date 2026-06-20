@@ -48,7 +48,7 @@ def clustering_matrix():
     link = sch.linkage(dist_condensed, 'single')
 
     # pass the ticker names so the dendrogram leaves are labelled by asset
-    plot_dendrogram(link=link, labels=dep_matrix.columns.tolist())
+    # plot_dendrogram(link=link, labels=dep_matrix.columns.tolist())
 
     return link
 

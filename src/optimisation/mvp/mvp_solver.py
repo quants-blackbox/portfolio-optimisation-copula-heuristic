@@ -21,7 +21,7 @@ def mvp_weights(cov):
     assets = cov.columns if isinstance(cov, pd.DataFrame) else range(len(w))
     w = pd.Series(w, index=assets)
 
-    # _plot_weights(w)
+    _plot_weights(w)
 
     return w
 

@@ -161,7 +161,7 @@ def plot_cumulative_returns(returns_df: pd.DataFrame,
 
     ax_main.legend(loc='upper left', fontsize=9, framealpha=0.9)
     ax_main.set_title(
-        'Figure 6: Cumulative Returns — Out-of-Sample Test Period (2013–2025)',
+        'Figure 6: Cumulative Returns — Out-of-Sample Test Period (2019–2025)',
         fontsize=12, pad=10
     )
     ax_main.grid(axis='y', alpha=0.25, lw=0.5)
